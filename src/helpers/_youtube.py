@@ -227,26 +227,34 @@ class YouTubeUtils:
         httpx = HttpxClient()
         # Select the appropriate API endpoint based on is_video
         if is_video:
-            api_endpoint = f"{API_URL2}{video_id}&format=m4a"
+            api_endpoint = f"{API_URL2}{video_id}&format=mp4"
         else:
             api_endpoint = f"{API_URL1}{video_id}"
 
-        if public_url := await httpx.make_request(api_endpoint):
-            # MP3 API returns "results", MP4 API returns "download_url"
-            dl_url = public_url.get("download_url" if is_video else "results")
-            if not dl_url:
-                LOGGER.error(f"Response from API is empty for {'video' if is_video else 'audio'}")
+        if is_video:
+            # MP4 API returns JSON with "download_url"
+            public_url = await httpx.make_request(api_endpoint)
+            if not public_url:
+                LOGGER.error("API request failed for video")
                 return None
 
-            # Download the file directly from the URL
+            dl_url = public_url.get("download_url")
+            if not dl_url:
+                LOGGER.error("Response from MP4 API is empty")
+                return None
+
             dl = await httpx.download_file(dl_url)
             if not dl.success:
-                LOGGER.error(f"Failed to download file from {dl_url}")
+                LOGGER.error(f"Failed to download MP4 file from {dl_url}")
                 return None
             return dl.file_path
-
-        LOGGER.error(f"API request failed for {'video' if is_video else 'audio'}")
-        return None
+        else:
+            # MP3 API returns the file directly
+            dl = await httpx.download_file(api_endpoint, file_path=Path(DOWNLOADS_DIR) / f"{video_id}.mp3")
+            if not dl.success:
+                LOGGER.error(f"Failed to download MP3 file from {api_endpoint}")
+                return None
+            return dl.file_path
 
     @staticmethod
     async def download_with_yt_dlp(video_id: str, video: bool) -> Optional[str]:
