@@ -212,7 +212,7 @@ async def song_cmd(c: Client, message: types.Message):
     """Handle the /song command."""
     args = extract_argument(message.text)
     reply = await message.reply_text(
-        f"🎶 USE: <code>@SpTubeBot {args or 'song name'}</code>"
+        f"🎶 USE: <code>@axMultiDLBot {args or 'song name'}</code>"
     )
     if isinstance(reply, types.Error):
         c.logger.warning(f"Error sending message: {reply}")
