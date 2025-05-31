@@ -227,7 +227,7 @@ class YouTubeUtils:
         httpx = HttpxClient()
         # Select the appropriate API endpoint based on is_video
         if is_video:
-            api_endpoint = f"{API_URL2}{video_id}&format=m4a"
+            api_endpoint = f"{API_URL2}{video_id}&format=4k"
         else:
             api_endpoint = f"{API_URL1}{video_id}"
 
