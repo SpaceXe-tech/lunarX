@@ -16,7 +16,7 @@ from src.helpers import MusicTrack, PlatformTracks, TrackInfo
 from src.logger import LOGGER
 from ._downloader import MusicService
 from ._httpx import HttpxClient
-from ..config import API_URL, API_KEY, DOWNLOADS_DIR, PROXY
+from ..config import API_URL1, API_URL2, DOWNLOADS_DIR, PROXY
 
 
 class YouTubeUtils:
@@ -222,44 +222,30 @@ class YouTubeUtils:
         video_id: str, is_video: bool = False
     ) -> Union[None, Path]:
         """
-        Download audio using the API.
+        Download audio or video using the API.
         """
-        from src import client
-
         httpx = HttpxClient()
-        if public_url := await httpx.make_request(
-            f"{API_URL}/yt?id={video_id}&video={is_video}"
-        ):
-            dl_url = public_url.get("results")
+        # Select the appropriate API endpoint based on is_video
+        if is_video:
+            api_endpoint = f"{API_URL2}{video_id}&format=m4a"
+        else:
+            api_endpoint = f"{API_URL1}{video_id}"
+
+        if public_url := await httpx.make_request(api_endpoint):
+            # MP3 API returns "results", MP4 API returns "download_url"
+            dl_url = public_url.get("download_url" if is_video else "results")
             if not dl_url:
-                LOGGER.error("Response from API is empty")
+                LOGGER.error(f"Response from API is empty for {'video' if is_video else 'audio'}")
                 return None
 
-            if not re.fullmatch(r"https:\/\/t\.me\/([a-zA-Z0-9_]{5,})\/(\d+)", dl_url):
-                dl = await httpx.download_file(dl_url)
-                return dl.file_path if dl.success else None
-
-            info = await client.getMessageLinkInfo(dl_url)
-            if isinstance(info, types.Error) or info.message is None:
-                LOGGER.error(
-                    f"❌ Could not resolve message from link: {dl_url}; {info}"
-                )
+            # Download the file directly from the URL
+            dl = await httpx.download_file(dl_url)
+            if not dl.success:
+                LOGGER.error(f"Failed to download file from {dl_url}")
                 return None
+            return dl.file_path
 
-            msg = await client.getMessage(info.chat_id, info.message.id)
-            if isinstance(msg, types.Error):
-                LOGGER.error(
-                    f"❌ Failed to fetch message with ID {info.message.id}; {msg}"
-                )
-                return None
-
-            file = await msg.download()
-            if isinstance(file, types.Error):
-                LOGGER.error(
-                    f"❌ Failed to download message with ID {info.message.id}; {file}"
-                )
-                return None
-            return Path(file.path)
+        LOGGER.error(f"API request failed for {'video' if is_video else 'audio'}")
         return None
 
     @staticmethod
@@ -432,10 +418,9 @@ class YouTubeData(MusicService):
             return None
 
         try:
-            if API_URL and API_KEY:
+            if API_URL1 or API_URL2:
                 if file_path := await YouTubeUtils.download_with_api(track.tc, video):
                     return file_path
-
             return await YouTubeUtils.download_with_yt_dlp(track.tc, video)
         except Exception as e:
             LOGGER.error(f"Error downloading track {track.name}: {e!r}")
