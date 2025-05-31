@@ -104,7 +104,7 @@ def add_controls(img: Image.Image) -> Image.Image:
     """
     Adds blurred background effect and overlay controls.
     """
-    img = img.filter(ImageFilter.GaussianBlur(25))
+    img = img.filter(ImageFilter.GaussianBlur(13))
     box = (120, 120, 520, 480)
 
     region = img.crop(box)
@@ -117,7 +117,9 @@ def add_controls(img: Image.Image) -> Image.Image:
     )
 
     img.paste(dark_region, box, mask)
-    img.paste(controls, (135, 305), controls)
+    img.paste(controls
+
+, (135, 305), controls)
 
     return img
 
@@ -185,7 +187,20 @@ async def gen_thumb(song: CachedTrack) -> str:
     bg.paste(image, (paste_x, paste_y), image)
 
     draw = ImageDraw.Draw(bg)
-    draw.text((285, 180), "Fallen Beatz", (192, 192, 192), font=FONTS["nfont"])
+    
+    # Engraved effect for "⎚ Bɪʟʟ∆ Mᴜsɪᴄ" on the right upward side
+    text = "⎚ Bɪʟʟ∆ Mᴜsɪᴄ"
+    text_x, text_y = 450, 100  # Right upward side
+    shadow_offset = 2  # Offset for engraved effect
+    shadow_color = (50, 50, 50)  # Darker color for shadow
+    main_color = (255, 255, 255)  # White for main text
+    bold_font = ImageFont.truetype("src/modules/utils/font.ttf", 20)  # tfont for bold effect
+
+    # Draw shadow text for engraved effect
+    draw.text((text_x + shadow_offset, text_y + shadow_offset), text, shadow_color, font=bold_font)
+    # Draw main text
+    draw.text((text_x, text_y), text, main_color, font=bold_font)
+    
     draw.text((285, 200), title, (255, 255, 255), font=FONTS["tfont"])
     draw.text((287, 235), artist, (255, 255, 255), font=FONTS["cfont"])
     draw.text((478, 321), get_duration(duration), (192, 192, 192), font=FONTS["dfont"])
