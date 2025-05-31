@@ -50,6 +50,8 @@ LOGGER_ID: int = get_env_int("LOGGER_ID", 0)
 MONGO_URI: Optional[str] = getenv("MONGO_URI")
 API_URL: Optional[str] = getenv("API_URL")
 API_KEY: Optional[str] = getenv("API_KEY")
+API_URL1: Optional[str] = getenv("API_URL1")
+API_URL2: Optional[str] = getenv("API_URL2")
 PROXY: Optional[str] = getenv("PROXY")
 
 DEFAULT_SERVICE: str = getenv("DEFAULT_SERVICE", "youtube").lower()
