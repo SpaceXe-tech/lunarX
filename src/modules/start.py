@@ -25,38 +25,6 @@ from src.modules.utils.play_helpers import (
 )
 
 
-@Client.on_message(filters=Filter.command(["start", "help"]))
-async def start_cmd(c: Client, message: types.Message):
-    """
-    Handle the /start and /help command to welcome users.
-    """
-    chat_id = message.chat_id
-    lang = await db.get_lang(chat_id)
-    bot_name = c.me.first_name
-    if chat_id < 0:
-        text = get_string("StartText", lang).format(
-            await message.mention(), bot_name, SUPPORT_GROUP
-        )
-        reply = await message.reply_text(
-            text=text,
-            disable_web_page_preview=True,
-            reply_markup=SupportButton,
-        )
-        if isinstance(reply, types.Error):
-            c.logger.warning(f"Error sending start message: {reply.message}")
-        return None
-
-    text = get_string("PmStartText", lang).format(
-        await message.mention(), bot_name, __version__
-    )
-    bot_username = c.me.usernames.editable_username
-    reply = await message.reply_text(text, reply_markup=add_me_markup(bot_username))
-    if isinstance(reply, types.Error):
-        c.logger.warning(f"Error sending start message: {reply.message}")
-
-    return None
-
-
 @Client.on_message(filters=Filter.command("privacy"))
 async def privacy_handler(c: Client, message: types.Message):
     """
@@ -172,52 +140,6 @@ async def reload_cmd(c: Client, message: types.Message) -> None:
     if isinstance(reply, types.Error):
         c.logger.warning(f"Error sending message: {reply} for chat {chat_id}")
     return None
-
-
-@Client.on_message(filters=Filter.command("ping"))
-async def ping_cmd(client: Client, message: types.Message) -> None:
-    """
-    Handle the /ping command to check bot performance metrics.
-    """
-    start_time = time.monotonic()
-    reply_msg = await message.reply_text("🏓 Pinging...")
-    latency = (time.monotonic() - start_time) * 1000  # ms
-
-    response = await call.stats_call(message.chat_id if message.chat_id < 0 else 1)
-    if isinstance(response, types.Error):
-        call_ping = response.message
-        cpu_usage = "Unavailable"
-    else:
-        call_ping, cpu_usage = response
-    call_ping_info = f"{call_ping:.2f} ms"
-    cpu_info = f"{cpu_usage:.2f}%"
-    uptime = datetime.now() - StartTime
-    uptime_str = str(uptime).split(".")[0]
-
-    response = (
-        "📊 <b>System Performance Metrics</b>\n\n"
-        f"⏱️ <b>Bot Latency:</b> <code>{latency:.2f} ms</code>\n"
-        f"🕒 <b>Uptime:</b> <code>{uptime_str}</code>\n"
-        f"🧠 <b>CPU Usage:</b> <code>{cpu_info}</code>\n"
-        f"📞 <b>NTgCalls Ping:</b> <code>{call_ping_info}</code>\n"
-    )
-    done = await reply_msg.edit_text(response, disable_web_page_preview=True)
-    if isinstance(done, types.Error):
-        client.logger.warning(f"Error sending message: {done}")
-    return None
-
-
-@Client.on_message(filters=Filter.command("song"))
-async def song_cmd(c: Client, message: types.Message):
-    """Handle the /song command."""
-    args = extract_argument(message.text)
-    reply = await message.reply_text(
-        f"🎶 USE: <code>@axMultiDLBot {args or 'song name'}</code>"
-    )
-    if isinstance(reply, types.Error):
-        c.logger.warning(f"Error sending message: {reply}")
-
-    return
 
 
 @Client.on_updateNewCallbackQuery(filters=Filter.regex(r"help_\w+"))
